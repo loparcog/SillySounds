@@ -1,0 +1,16 @@
+{
+  "slug": "SillySounds",
+  "name": "Silly Sounds",
+  "version": "2.0.0",
+  "license": "GPL-3.0-or-later",
+  "brand": "Silly Sounds",
+  "author": "Giacomo Loparco",
+  "authorEmail": "",
+  "authorUrl": "",
+  "pluginUrl": "",
+  "manualUrl": "",
+  "sourceUrl": "https://github.com/loparcog/SillySounds",
+  "donateUrl": "",
+  "changelogUrl": "",
+  "modules": []
+}
