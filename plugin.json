@@ -12,5 +12,14 @@
   "sourceUrl": "https://github.com/loparcog/SillySounds",
   "donateUrl": "",
   "changelogUrl": "",
-  "modules": []
+  "modules": [
+    {
+      "slug": "Sesame",
+      "name": "Sesame",
+      "description": "Clock modulator for repeat, swing, and delay",
+      "tags": [
+        "Clock modulator"
+      ]
+    }
+  ]
 }
