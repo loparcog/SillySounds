@@ -1,6 +1,6 @@
 /*
     Silly Sounds > Sesame
-    Clock modulator for repeat, swing, and delay
+    Clock modulator for repeat and swing
     Giacomo Loparco 2022
 */
 
@@ -8,21 +8,20 @@
 
 struct Sesame : Module
 {
-
     enum ParamId
     {
         SWING_PARAM,
-        DELAY_PARAM,
+        SWINGMODAMP_PARAM,
         REPEAT_PARAM,
+        REPEATMODAMP_PARAM,
         PARAMS_LEN
     };
     enum InputId
     {
         CLOCK_INPUT,
         SWINGMOD_INPUT,
-        DELAYMOD_INPUT,
-        REPEATMOD_INPUT,
         TRIGGER_INPUT,
+        REPEATMOD_INPUT,
         INPUTS_LEN
     };
     enum OutputId
@@ -32,9 +31,27 @@ struct Sesame : Module
     };
     enum LightId
     {
-        LIGHT_LIGHT,
+        SWINGLIGHT_LIGHT,
+        REPEATLIGHT_LIGHT,
         LIGHTS_LEN
     };
+
+    Sesame()
+    {
+        config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+        configParam(SWING_PARAM, 0.f, 1.f, 0.f, "Swing amount", "%");
+        // Set snap so it snaps to whole numbers
+        // paramQuantities[SWING_PARAM]->snapEnabled = true;
+        configParam(SWINGMODAMP_PARAM, -1.f, 1.f, 0.f, "Mod influence");
+        configParam(REPEAT_PARAM, 1.f, 8.f, 1.f, "Repeat frequency", "x");
+        paramQuantities[REPEAT_PARAM]->snapEnabled = true;
+        configParam(REPEATMODAMP_PARAM, -1.f, 1.f, 0.f, "Mod influence");
+        configInput(CLOCK_INPUT, "Global clock");
+        configInput(SWINGMOD_INPUT, "Swing amount mod");
+        configInput(TRIGGER_INPUT, "Repeat trigger");
+        configInput(REPEATMOD_INPUT, "Repeat frequency mod");
+        configOutput(OUT_OUTPUT, "Output");
+    }
 
     // VARIABLE DECLARATIONS
 
@@ -44,42 +61,22 @@ struct Sesame : Module
 
     // Clock managing values
     float clkCurrent = 0;
-    dsp::Timer clkTimer;
+    rack::dsp::Timer clkTimer;
     float clkPeriod = -1;
-    float clkRise = 0;
 
     // Input managing values
     float parSwing = 0;
-    float parRepeat = 0;
-    float parDelay = 0;
+    float parRepeat = 1;
 
     // Boolean for swing beat count
-    bool isSecondBeat = false;
+    bool isFirstBeat = true;
     float modPeriod = 0;
-
-    // Boolean for repeater mod
-    bool isRepeating = false;
 
     // Output variable
     float outValue = 0;
 
-    Sesame()
-    {
-        config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configParam(SWING_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(DELAY_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(REPEAT_PARAM, 0.f, 1.f, 0.f, "");
-        configInput(CLOCK_INPUT, "");
-        configInput(SWINGMOD_INPUT, "");
-        configInput(DELAYMOD_INPUT, "");
-        configInput(REPEATMOD_INPUT, "");
-        configInput(TRIGGER_INPUT, "");
-        configOutput(OUT_OUTPUT, "");
-    }
-
     void process(const ProcessArgs &args) override
     {
-
         /*
             GETTING THE PERIOD
             First, we can calculate the period of the input clock signal
@@ -88,8 +85,9 @@ struct Sesame : Module
 
         // TODO: Check if plugged in?
         // Or just generate a clock in this instead?
+        // Decisions, decisions
 
-        // Add the sample time to the timer
+        // Add the sample time to the timers
         clkTimer.process(args.sampleTime);
         // Keep the current time in a variable for future calculation use
         clkCurrent = clkTimer.getTime();
@@ -100,86 +98,67 @@ struct Sesame : Module
             // Set the current clock period to the timer and reset it
             clkPeriod = clkCurrent;
             clkTimer.reset();
+            clkCurrent = 0;
 
             // SWING
-            // Flip the isSecondBeat flag
-            isSecondBeat = !isSecondBeat;
+            // Flip the isFirstBeat flag
+            isFirstBeat = !isFirstBeat;
 
             // REPEAT
-            // Turn off the repeating flag
-            isRepeating = false;
+            // Set the repeating value to 1 and turn off the light
+            parRepeat = 1;
+            lights[REPEATLIGHT_LIGHT].setBrightness(0);
         }
 
         /*
             MOD THE OUTPUT
             Second, we can mod the output with a swing, repeat, or delay
-            The order of priority will be swing > repeat > delay, but in essence,
-            repeat will mainly be setting a flag, swing will be creating output
-            w.r.t repeat, and delay will hold output in a buffer if needed
+            The order of priority will be swing = repeat > delay, but in essence,
+            repeat and swing will generate the clock signals and delay will
+            hold any output in a buffer until it should be played
         */
 
         // Get the value of any knobs and mod inputs
         parSwing = params[SWING_PARAM].getValue();
-        parRepeat = params[REPEAT_PARAM].getValue();
-        parDelay = params[DELAY_PARAM].getValue();
 
-        // Set the clock rise time to half of the period, reduced by how much swing is set to
-        // More swing = smaller clock rise in the same period
-        clkRise = (clkPeriod / 2) * (1 - parSwing);
-        // Also set the modded period, which is the time needed to wait before rising w.r.t swing
-        modPeriod = clkPeriod * parSwing;
+        // Set the modulated period, based off of how much swing there is
+        // More swing = smaller period
+        modPeriod = clkPeriod * (1 - parSwing);
 
         // REPEAT
         // Check if we should be repeating the signal
         if (toggleTrigger.process(inputs[TRIGGER_INPUT].getVoltage()))
         {
-            // Set the flag
-            isRepeating = true;
+            // Set repeater to the knob value
+            parRepeat = params[REPEAT_PARAM].getValue();
+            // Set the light on as well
+            lights[REPEATLIGHT_LIGHT].setBrightness(1);
         }
+
+        outValue = 0;
 
         // SWING
-        // Check if we should play the first beat
-        if (!isSecondBeat)
+        // Check if we should play the first beat (wait for modded period)
+        if (isFirstBeat)
         {
-            // For first beat, check that we have waited for the first beat (period * swing) &&
-            // we haven't played too long (start + width * (1 - swing))
-            // This has been shortened to use modPeriod to shorten code and make it a bit more reasonable
-            // Also check for repeating
-            if (clkCurrent >= modPeriod && clkCurrent <= modPeriod + clkRise)
+            if (clkCurrent >= clkPeriod - modPeriod)
             {
-                outValue = 10;
-            }
-            // Otherwise turn output off
-            else
-            {
-                outValue = 0;
+                // Send the outvalue based on the repeater content
+                // This sends 10 unless
+                outValue = (10 - (int(((clkCurrent - (clkPeriod - modPeriod)) * (parRepeat * 2)) / modPeriod) % 2) * 10);
             }
         }
-        // Check if we should still be playing the second beat or if it should be repeated
-        else
+        // Check how we should play the second beat
+        else if (clkCurrent <= modPeriod)
         {
-            // Base and repeating case
-            if (clkCurrent <= clkRise)
-            {
-                outValue = 10;
-            }
-            else
-            {
-                outValue = 0;
-            }
+            outValue = (10 - (int((clkCurrent * (parRepeat * 2)) / modPeriod) % 2) * 10);
         }
 
-        // DELAY
-        //
+        lights[REPEATLIGHT_LIGHT].setBrightness(isFirstBeat);
 
-        /*
-            SEND THE OUTPUT
-            Finally, we set the output values for our light and out port
-        */
-
+        // Send the output and set the swing light
         outputs[OUT_OUTPUT].setVoltage(outValue);
-        // Light takes a brightness from 0-1, so set it to that
-        lights[LIGHT_LIGHT].setBrightness(outValue / 10);
+        lights[SWINGLIGHT_LIGHT].setBrightness(outValue / 10);
     }
 };
 
@@ -195,19 +174,20 @@ struct SesameWidget : ModuleWidget
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.62, 39.0)), module, Sesame::SWING_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(32.569, 39.0)), module, Sesame::DELAY_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(20.32, 72.881)), module, Sesame::REPEAT_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.096, 43.419)), module, Sesame::SWING_PARAM));
+        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.096, 56.919)), module, Sesame::SWINGMODAMP_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.096, 73.735)), module, Sesame::REPEAT_PARAM));
+        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.096, 87.235)), module, Sesame::REPEATMODAMP_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(20.32, 28.825)), module, Sesame::CLOCK_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.62, 51.5)), module, Sesame::SWINGMOD_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(32.569, 51.5)), module, Sesame::DELAYMOD_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(8.62, 85.055)), module, Sesame::REPEATMOD_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(32.569, 85.055)), module, Sesame::TRIGGER_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 28.684)), module, Sesame::CLOCK_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.384, 56.919)), module, Sesame::SWINGMOD_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.384, 73.735)), module, Sesame::TRIGGER_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.384, 87.235)), module, Sesame::REPEATMOD_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(20.32, 104.641)), module, Sesame::OUT_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.24, 102.704)), module, Sesame::OUT_OUTPUT));
 
-        addChild(createLightCentered<LargeLight<YellowLight>>(mm2px(Vec(20.62, 44.105)), module, Sesame::LIGHT_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 49.52)), module, Sesame::SWINGLIGHT_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 80.485)), module, Sesame::REPEATLIGHT_LIGHT));
     }
 };
 
