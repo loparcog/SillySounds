@@ -39,9 +39,9 @@ struct Sesame : Module
     Sesame()
     {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configParam(SWING_PARAM, 0.f, 1.f, 0.f, "Swing amount", "%");
+        configParam(SWING_PARAM, 0.f, 100.f, 0.f, "Swing amount", "%");
         // Set snap so it snaps to whole numbers
-        // paramQuantities[SWING_PARAM]->snapEnabled = true;
+        paramQuantities[SWING_PARAM]->snapEnabled = true;
         configParam(SWINGMODAMP_PARAM, -1.f, 1.f, 0.f, "Mod influence");
         configParam(REPEAT_PARAM, 1.f, 8.f, 1.f, "Repeat frequency", "x");
         paramQuantities[REPEAT_PARAM]->snapEnabled = true;
@@ -118,8 +118,10 @@ struct Sesame : Module
             hold any output in a buffer until it should be played
         */
 
-        // Get the value of any knobs and mod inputs
-        parSwing = params[SWING_PARAM].getValue();
+        // Get the value of any knobs and mod inputs (Value from 0 to 1)
+        parSwing = clamp((params[SWING_PARAM].getValue() / 100) +
+                             ((inputs[SWINGMOD_INPUT].getVoltage() / 10) * params[SWINGMODAMP_PARAM].getValue()),
+                         0.f, 1.f);
 
         // Set the modulated period, based off of how much swing there is
         // More swing = smaller period
@@ -129,8 +131,12 @@ struct Sesame : Module
         // Check if we should be repeating the signal
         if (toggleTrigger.process(inputs[TRIGGER_INPUT].getVoltage()))
         {
-            // Set repeater to the knob value
-            parRepeat = params[REPEAT_PARAM].getValue();
+            // Set repeater to the knob value along with any mod value
+            parRepeat = clamp(params[REPEAT_PARAM].getValue() +
+                                  ((inputs[REPEATMOD_INPUT].getVoltage() / 10) * params[REPEATMODAMP_PARAM].getValue()) * 0.8,
+                              1.f, 8.f);
+            // Cast into an int
+            parRepeat = floor(parRepeat);
             // Set the light on as well
             lights[REPEATLIGHT_LIGHT].setBrightness(1);
         }
@@ -153,8 +159,6 @@ struct Sesame : Module
         {
             outValue = (10 - (int((clkCurrent * (parRepeat * 2)) / modPeriod) % 2) * 10);
         }
-
-        lights[REPEATLIGHT_LIGHT].setBrightness(isFirstBeat);
 
         // Send the output and set the swing light
         outputs[OUT_OUTPUT].setVoltage(outValue);
