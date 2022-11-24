@@ -14,6 +14,7 @@ struct Sesame : Module
         SWINGMODAMP_PARAM,
         REPEAT_PARAM,
         REPEATMODAMP_PARAM,
+        SWAP_PARAM,
         PARAMS_LEN
     };
     enum InputId
@@ -63,11 +64,12 @@ struct Sesame : Module
     // Clock tracker and managing values
     float clkCurrent = 0;
     rack::dsp::Timer clkTimer;
-    float clkPeriod = -1;
+    float clkPeriod = 0;
 
     // Parameter managing values
     float parSwing = 0;
     float parRepeat = 1;
+    int buttonOn = 0;
 
     // Boolean for swing beat count
     bool isFirstBeat = true;
@@ -84,98 +86,111 @@ struct Sesame : Module
     */
     void process(const ProcessArgs &args) override
     {
-        /*
-            GETTING THE PERIOD
-            First, we will need to know the period of the input clock signal.
-            We can get this by tracking the time between clock rises
-            NOTE: We can provide our own, but I just decided against it for now
-        */
-
-        // Add the amount of time between functions calls, or the sample time, to the timer
-        clkTimer.process(args.sampleTime);
-        // Get the current time to use for processing of the current function call
-        clkCurrent = clkTimer.getTime();
-
-        // Check if we are on a clock rise (0 -> 10)
-        if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage()))
-        {
-            // Set the current clock period to the current timer time, and reset the timer
-            clkPeriod = clkCurrent;
-            clkTimer.reset();
-            clkCurrent = 0;
-
-            // SWING
-            // Flip the isFirstBeat flag, each rise we're flipping from the first and
-            // second beat
-            isFirstBeat = !isFirstBeat;
-
-            // REPEAT
-            // Set the repeating frequency value to 1 and turn off the light
-            parRepeat = 1;
-            lights[REPEATLIGHT_LIGHT].setBrightness(0);
-        }
-
-        /*
-            MOD THE OUTPUT
-            Second, we can mod the output with a swing or repeat. Swing will be done by
-            making the clock periods smaller, putting pairs of beats together and spacing
-            each pair from one another proportionately with the current swing value. The
-            repeater will act on this edited period, splitting each clock signal into n
-            equally spaced clock signals. The setup is done in a way that you can do one
-            or the other, or both, or neither, but then why are you even using this module
-        */
-
-        // Get the value of the swing knob and add in any mod value, clamp from 0-1
-        parSwing = clamp((params[SWING_PARAM].getValue() / 100) +
-                             ((inputs[SWINGMOD_INPUT].getVoltage() / 10) * params[SWINGMODAMP_PARAM].getValue()),
-                         0.f, 1.f);
-
-        // Set the modulated period, based off of how much swing there is
-        // More swing = smaller period
-        modPeriod = clkPeriod * (1 - parSwing);
-
-        // REPEAT
-        // Check if we should be repeating the signal by checking the trigger input
-        if (toggleTrigger.process(inputs[TRIGGER_INPUT].getVoltage()))
-        {
-            // Get the value of the repeater knob and add in any mod value, clamp from 1-8
-            parRepeat = clamp(params[REPEAT_PARAM].getValue() +
-                                  ((inputs[REPEATMOD_INPUT].getVoltage() / 10) * params[REPEATMODAMP_PARAM].getValue()) * 0.8,
-                              1.f, 8.f);
-            // Cast into a whole number
-            parRepeat = floor(parRepeat);
-            // Set the light on as well
-            lights[REPEATLIGHT_LIGHT].setBrightness(1);
-        }
 
         // By default, have the output as 0
         outValue = 0;
 
-        // SWING
-        // Check if we are on the first beat
-        if (isFirstBeat)
+        // Make sure a clock signal is plugged in before we do any processing
+        if (inputs[CLOCK_INPUT].isConnected())
         {
-            // Wait until the current time reaches the start of the modded period time
-            if (clkCurrent >= clkPeriod - modPeriod)
+            /*
+                GETTING THE PERIOD
+                First, we will need to know the period of the input clock signal.
+                We can get this by tracking the time between clock rises
+                NOTE: We can provide our own, but I just decided against it for now
+            */
+
+            // Add the amount of time between functions calls, or the sample time, to the timer
+            clkTimer.process(args.sampleTime);
+            // Get the current time to use for processing of the current function call
+            clkCurrent = clkTimer.getTime();
+
+            // Check if we are on a clock rise (0 -> 10)
+            if (clockTrigger.process(inputs[CLOCK_INPUT].getVoltage()))
             {
-                /*
-                    This output is set to 10 for half of the mod period, and 0 for the second
-                    half, as regular clock signals would be. However, this is done through
-                    some repeater math as well. Essentially, for n repeats, we are dividing the
-                    period into n groups, each group having the first half high (10) and the
-                    second half low (0). If there is no repeater trigger, the parRepeat value
-                    is set to 1 to mimic just a single beat
-                */
-                outValue = (10 - (int(((clkCurrent - (clkPeriod - modPeriod)) * (parRepeat * 2)) / modPeriod) % 2) * 10);
+                // Set the current clock period to the current timer time, and reset the timer
+                clkPeriod = clkCurrent;
+                clkTimer.reset();
+                clkCurrent = 0;
+
+                // SWING
+                // Flip the isFirstBeat flag, each rise we're flipping from the first and
+                // second beat
+                isFirstBeat = !isFirstBeat;
+
+                // REPEAT
+                // Set the repeating frequency value to 1 and turn off the light
+                parRepeat = 1;
+                lights[REPEATLIGHT_LIGHT].setBrightness(0);
             }
-        }
-        // If we're on the second beat, we want to play until we reach the end of the modded
-        // period time, always starting at the rise of the original second beat
-        else if (clkCurrent <= modPeriod)
-        {
-            // Same math, don't need to do some period check though since the clock time is
-            // lined up
-            outValue = (10 - (int((clkCurrent * (parRepeat * 2)) / modPeriod) % 2) * 10);
+
+            /*
+                MOD THE OUTPUT
+                Second, we can mod the output with a swing or repeat. Swing will be done by
+                making the clock periods smaller, putting pairs of beats together and spacing
+                each pair from one another proportionately with the current swing value. The
+                repeater will act on this edited period, splitting each clock signal into n
+                equally spaced clock signals. The setup is done in a way that you can do one
+                or the other, or both, or neither, but then why are you even using this module
+            */
+
+            // Check if the swap button was pressed to switch the first and second beats
+            if (params[SWAP_PARAM].getValue() > buttonOn)
+            {
+                isFirstBeat = !isFirstBeat;
+            }
+            // Set the button value
+            buttonOn = params[SWAP_PARAM].getValue();
+
+            // Get the value of the swing knob and add in any mod value, clamp from 0-1
+            parSwing = clamp((params[SWING_PARAM].getValue() / 100) +
+                                 ((inputs[SWINGMOD_INPUT].getVoltage() / 10) * params[SWINGMODAMP_PARAM].getValue()),
+                             0.f, 1.f);
+
+            // Set the modulated period, based off of how much swing there is
+            // More swing = smaller period
+            modPeriod = clkPeriod * (1 - parSwing);
+
+            // REPEAT
+            // Check if we should be repeating the signal by checking the trigger input
+            if (toggleTrigger.process(inputs[TRIGGER_INPUT].getVoltage()))
+            {
+                // Get the value of the repeater knob and add in any mod value, clamp from 1-8
+                parRepeat = clamp(params[REPEAT_PARAM].getValue() +
+                                      ((inputs[REPEATMOD_INPUT].getVoltage() / 10) * params[REPEATMODAMP_PARAM].getValue()) * 0.8,
+                                  1.f, 8.f);
+                // Cast into a whole number
+                parRepeat = floor(parRepeat);
+                // Set the light on as well
+                lights[REPEATLIGHT_LIGHT].setBrightness(1);
+            }
+
+            // SWING
+            // Check if we are on the first beat (make sure we have a period to avoid constant 10V at start)
+            if (clkPeriod && isFirstBeat)
+            {
+                // Wait until the current time reaches the start of the modded period time
+                if (clkCurrent >= clkPeriod - modPeriod)
+                {
+                    /*
+                        This output is set to 10 for half of the mod period, and 0 for the second
+                        half, as regular clock signals would be. However, this is done through
+                        some repeater math as well. Essentially, for n repeats, we are dividing the
+                        period into n groups, each group having the first half high (10) and the
+                        second half low (0). If there is no repeater trigger, the parRepeat value
+                        is set to 1 to mimic just a single beat
+                    */
+                    outValue = (10 - (int(((clkCurrent - (clkPeriod - modPeriod)) * (parRepeat * 2)) / modPeriod) % 2) * 10);
+                }
+            }
+            // If we're on the second beat, we want to play until we reach the end of the modded
+            // period time, always starting at the rise of the original second beat
+            else if (clkCurrent <= modPeriod)
+            {
+                // Same math, don't need to do some period check though since the clock time is
+                // lined up
+                outValue = (10 - (int((clkCurrent * (parRepeat * 2)) / modPeriod) % 2) * 10);
+            }
         }
 
         // Send the output and set the swing light based on this output
@@ -200,6 +215,7 @@ struct SesameWidget : ModuleWidget
         addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.096, 56.919)), module, Sesame::SWINGMODAMP_PARAM));
         addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.096, 73.735)), module, Sesame::REPEAT_PARAM));
         addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.096, 87.235)), module, Sesame::REPEATMODAMP_PARAM));
+        addParam(createParamCentered<VCVButton>(mm2px(Vec(22.384, 43.419)), module, Sesame::SWAP_PARAM));
 
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 28.684)), module, Sesame::CLOCK_INPUT));
         addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.384, 56.919)), module, Sesame::SWINGMOD_INPUT));
