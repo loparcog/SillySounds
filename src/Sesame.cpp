@@ -81,7 +81,7 @@ struct Sesame : Module
     /*
         THE PROCESS
         This is the function that is run once every sample period, which I think
-        by default is around 44Hz, so it is run regularly and rapidly. Anything
+        by default is around 48Hz, so it is run regularly and rapidly. Anything
         happening in the module is in here
     */
     void process(const ProcessArgs &args) override
@@ -166,30 +166,34 @@ struct Sesame : Module
             }
 
             // SWING
-            // Check if we are on the first beat (make sure we have a period to avoid constant 10V at start)
-            if (clkPeriod && isFirstBeat)
+            // Make sure we have a period to avoid constant 10V at start
+            if (clkPeriod)
             {
-                // Wait until the current time reaches the start of the modded period time
-                if (clkCurrent >= clkPeriod - modPeriod)
+                // Check if we are on the first beat
+                if (isFirstBeat)
                 {
-                    /*
-                        This output is set to 10 for half of the mod period, and 0 for the second
-                        half, as regular clock signals would be. However, this is done through
-                        some repeater math as well. Essentially, for n repeats, we are dividing the
-                        period into n groups, each group having the first half high (10) and the
-                        second half low (0). If there is no repeater trigger, the parRepeat value
-                        is set to 1 to mimic just a single beat
-                    */
-                    outValue = (10 - (int(((clkCurrent - (clkPeriod - modPeriod)) * (parRepeat * 2)) / modPeriod) % 2) * 10);
+                    // Wait until the current time reaches the start of the modded period time
+                    if (clkCurrent >= clkPeriod - modPeriod)
+                    {
+                        /*
+                            This output is set to 10 for half of the mod period, and 0 for the second
+                            half, as regular clock signals would be. However, this is done through
+                            some repeater math as well. Essentially, for n repeats, we are dividing the
+                            period into n groups, each group having the first half high (10) and the
+                            second half low (0). If there is no repeater trigger, the parRepeat value
+                            is set to 1 to mimic just a single beat
+                        */
+                        outValue = (10 - (int(((clkCurrent - (clkPeriod - modPeriod)) * (parRepeat * 2)) / modPeriod) % 2) * 10);
+                    }
                 }
-            }
-            // If we're on the second beat, we want to play until we reach the end of the modded
-            // period time, always starting at the rise of the original second beat
-            else if (clkCurrent <= modPeriod)
-            {
-                // Same math, don't need to do some period check though since the clock time is
-                // lined up
-                outValue = (10 - (int((clkCurrent * (parRepeat * 2)) / modPeriod) % 2) * 10);
+                // If we're on the second beat, we want to play until we reach the end of the modded
+                // period time, always starting at the rise of the original second beat
+                else if (clkCurrent <= modPeriod)
+                {
+                    // Same math, don't need to do some period check though since the clock time is
+                    // lined up
+                    outValue = (10 - (int((clkCurrent * (parRepeat * 2)) / modPeriod) % 2) * 10);
+                }
             }
         }
 
