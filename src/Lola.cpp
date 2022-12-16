@@ -2,8 +2,6 @@
     Silly Sounds > Lola
     Live sampler for taking input and repeating it at any interval
     Giacomo Loparco 2022
-
-    TODO:
 */
 
 #include "plugin.hpp"
@@ -40,13 +38,13 @@ struct Lola : Module
     Lola()
     {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configParam(BRECORD_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(BPLAY_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(BSTOP_PARAM, 0.f, 1.f, 0.f, "");
-        configInput(SIGNAL_INPUT, "");
-        configInput(IRECORD_INPUT, "");
-        configInput(IPLAY_INPUT, "");
-        configOutput(OUT_OUTPUT, "");
+        configParam(BRECORD_PARAM, 0.f, 1.f, 0.f, "Start/stop recording");
+        configParam(BPLAY_PARAM, 0.f, 1.f, 0.f, "Start/restart playback");
+        configParam(BSTOP_PARAM, 0.f, 1.f, 0.f, "Stop playback");
+        configInput(SIGNAL_INPUT, "Signal input");
+        configInput(IRECORD_INPUT, "Start/stop recording trigger");
+        configInput(IPLAY_INPUT, "Start/restart playback trigger");
+        configOutput(OUT_OUTPUT, "Output");
     }
 
     // Schmitt Triggers to check for rises
@@ -55,12 +53,14 @@ struct Lola : Module
 
     // Assuming a sample rate of 48Khz, sample up to 4s (48000 * 4 = 192000)
     int sampleMax = 192000;
+    // Track button states
     float oldBPlay = 0.f;
     float oldBRec = 0.f;
     float oldBStop = 0.f;
+    // Track if we are recording or playing audio
     bool isRecording = false;
     bool isPlaying = false;
-    // Sample and iterator
+    // Vector to hold sample and index for reading
     std::vector<float> vSample;
     int i = 0;
 
@@ -73,42 +73,43 @@ struct Lola : Module
             voltages in the vector
         */
 
-        // Check if the button has been pressed or an input has been seen
+        // Check if the record button or input trigger has been activated
         if (params[BRECORD_PARAM].getValue() > oldBRec ||
             recTrigger.process(inputs[IRECORD_INPUT].getVoltage()))
         {
-            // Start recording if we were not
+            // Start recording if we were not initially
             if (!isRecording)
             {
-                // Flip the flag and empty the vector
+                // Flip the recording flag, empty the sample vector
                 isRecording = true;
                 lights[LRECORD_LIGHT].setBrightness(1);
                 vSample.clear();
             }
-            // Otherwise stop
+            // Stop recording if we were
             else
             {
+                // Flip the recording flag
                 isRecording = false;
                 lights[LRECORD_LIGHT].setBrightness(0);
             }
         }
 
-        // Set the new button value
+        // Save the new recording button value for later comparison
         oldBRec = params[BRECORD_PARAM].getValue();
 
-        // If we're recording, start storing values
+        // If we're recording, start storing the current signal as a sample
         if (isRecording)
         {
-            // Make sure the vector is below max size
+            // Make sure the vector is below max size (4s of samples)
             if (static_cast<int>(vSample.size()) > sampleMax)
             {
-                // Stop recording
+                // If the vector is full, stop recording
                 isRecording = false;
                 lights[LRECORD_LIGHT].setBrightness(0);
             }
             else
             {
-                // Push back the current voltage into the vector
+                // Push back the current input voltage into the vector
                 vSample.push_back(inputs[SIGNAL_INPUT].getVoltage());
             }
         }
@@ -120,7 +121,7 @@ struct Lola : Module
             signal
         */
 
-        // Check if the play button has been pressed or an input has been seen
+        // Check if the play button or input trigger has been activated
         if (params[BPLAY_PARAM].getValue() > oldBPlay ||
             playTrigger.process(inputs[IPLAY_INPUT].getVoltage()))
         {
@@ -137,7 +138,7 @@ struct Lola : Module
             }
         }
 
-        // Set the new button value
+        // Set the new play button value
         oldBPlay = params[BPLAY_PARAM].getValue();
 
         // Check if the stop button has been pressed
@@ -148,6 +149,7 @@ struct Lola : Module
             lights[LPLAY_LIGHT].setBrightness(0);
         }
 
+        // Save the new stop button value, and set the signal accordingly
         oldBStop = params[BSTOP_PARAM].getValue();
         lights[LSTOP_LIGHT].setBrightness(params[BSTOP_PARAM].getValue());
 
@@ -157,10 +159,10 @@ struct Lola : Module
             // Make sure that we're not at the end of the sample
             if (i == static_cast<int>(vSample.size()))
             {
-                // Stop playing
+                // If we are, stop playing
                 isPlaying = false;
                 lights[LPLAY_LIGHT].setBrightness(0);
-                // Send passthrough
+                // Send passthrough instead
                 outputs[OUT_OUTPUT].setVoltage(inputs[SIGNAL_INPUT].getVoltage());
             }
             // Play the sample
