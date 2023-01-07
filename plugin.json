@@ -28,6 +28,12 @@
       "tags": [
         "Sampler"
       ]
+    },
+    {
+      "slug": "Kyle",
+      "name": "Kyle",
+      "description": "Live sidechain module",
+      "tags": []
     }
   ]
 }
