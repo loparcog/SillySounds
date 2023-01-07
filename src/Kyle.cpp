@@ -1,4 +1,5 @@
 #include "plugin.hpp"
+#include <stdlib.h>
 
 struct Kyle : Module
 {
@@ -48,19 +49,22 @@ struct Kyle : Module
     // Exponential, return function of time
     float expDecay()
     {
-        return (params[PDECAY_PARAM].getValue() / 10) * pow(t, 2);
+        // e^(t * decay) * currVoltage / 10
+        return exp(t * (params[PDECAY_PARAM].getValue() * 10.f)) * (currVoltage / 7500.f);
     }
 
     // Linear, return constant decay
     float linDecay()
     {
-        return params[PDECAY_PARAM].getValue() / 1000;
+        // linear, just decay
+        return params[PDECAY_PARAM].getValue() / 1000.f;
     }
 
     // Logarithmic, return function of time
     float logDecay()
     {
-        return (1 / (t * 10 + 0.5)) * params[PDECAY_PARAM].getValue() / 1000;
+        // log(t * decay) * currVoltage / 10
+        return std::max(0.f, log(t * (params[PDECAY_PARAM].getValue() * 10.f)) * (currVoltage / 10.f));
     }
 
     void process(const ProcessArgs &args) override
