@@ -5,9 +5,9 @@ struct Kyle : Module
 {
     enum ParamId
     {
-        PTYPE_PARAM,
-        PVIMP_PARAM,
         PDECAY_PARAM,
+        PEXP_PARAM,
+        PAMP_PARAM,
         PARAMS_LEN
     };
     enum InputId
@@ -29,76 +29,57 @@ struct Kyle : Module
     Kyle()
     {
         config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-        configParam(PTYPE_PARAM, 0.f, 2.f, 0.f, "");
-        configParam(PVIMP_PARAM, 0.f, 1.f, 0.f, "");
-        configParam(PDECAY_PARAM, 0.f, 1.f, 0.f, "");
-        configInput(SIGNAL_INPUT, "");
-        configOutput(ENV_OUTPUT, "");
-        configOutput(ENVINV_OUTPUT, "");
+        configParam(PDECAY_PARAM, 0.f, 10.f, 0.f, "Scale of decay");
+        configParam(PEXP_PARAM, -10.f, 10.f, 0.f, "Exponent of decay");
+        configParam(PAMP_PARAM, 0.f, 1.f, 0.f, "Amplication of output");
+        configInput(SIGNAL_INPUT, "Signal input");
+        configOutput(ENV_OUTPUT, "Envelope output");
+        configOutput(ENVINV_OUTPUT, "Inverse envelope output");
     }
 
-    // Store the current input and held voltages
+    // Voltage of the current input signal
     float currVoltage = 0.f;
+    // Voltage of the output signal
     float outVoltage = 0.f;
-
-    // Hold the time from the last passthrough
+    float ampOut = 0.f;
+    // Time since we hit the current input signal
     float t = 0.f;
-
-    // Create functions for each decay value
-
-    // Exponential, return function of time
-    float expDecay()
-    {
-        // e^(t * decay) * currVoltage / 10
-        return exp(t * (params[PDECAY_PARAM].getValue() * 10.f)) * (currVoltage / 7500.f);
-    }
-
-    // Linear, return constant decay
-    float linDecay()
-    {
-        // linear, just decay
-        return params[PDECAY_PARAM].getValue() / 1000.f;
-    }
-
-    // Logarithmic, return function of time
-    float logDecay()
-    {
-        // log(t * decay) * currVoltage / 10
-        return std::max(0.f, log(t * (params[PDECAY_PARAM].getValue() * 10.f)) * (currVoltage / 10.f));
-    }
 
     void process(const ProcessArgs &args) override
     {
-        // Abs the current value, make all peaks positive
+        // Get input voltage (keep it positive)
         currVoltage = abs(inputs[SIGNAL_INPUT].getVoltage());
-        // Set the output
-        // If the signal is greater than the current output voltage
-        if (currVoltage > outVoltage)
+        // Add to the timer
+        t += args.sampleTime;
+
+        /*
+            We decay the signal either exponentially if PEXP != 0,
+            otherwise we decay linearly
+            out - (decay * e^(exp))
+        */
+        outVoltage = outVoltage - ((params[PDECAY_PARAM].getValue() / args.sampleRate) *
+                                   exp((params[PEXP_PARAM].getValue() * t)));
+
+        /*
+            If the original signal is greater than our output voltage,
+                currVoltage > outVoltage
+            Set the output to the signal voltage. Otherwise, use the
+            decayed output voltage
+        */
+        if (currVoltage >= outVoltage)
         {
-            // Set the output to the signal voltage
             outVoltage = currVoltage;
+            // Reset the time
             t = 0.f;
         }
-        // If the current output voltage is greater than the signal
-        else
-        {
-            // Reduce the output by a given decay type value
-            switch (static_cast<int>(params[PTYPE_PARAM].getValue()))
-            {
-            case 0:
-                outVoltage -= expDecay();
-                break;
-            case 1:
-                outVoltage -= linDecay();
-                break;
-            case 2:
-                outVoltage -= logDecay();
-                break;
-            }
-            t += args.sampleTime;
-        }
-        // Set the output
-        outputs[ENV_OUTPUT].setVoltage(outVoltage);
+        outVoltage = std::max(currVoltage, outVoltage);
+
+        // Amplify the output (maxing out at 10)
+        ampOut = std::min(10.f, abs(outVoltage * (1 + 9.f * params[PAMP_PARAM].getValue())));
+
+        // Set output voltages, accounting for amplification
+        outputs[ENV_OUTPUT].setVoltage(ampOut);
+        outputs[ENVINV_OUTPUT].setVoltage(10 - ampOut);
     }
 };
 
@@ -114,14 +95,14 @@ struct KyleWidget : ModuleWidget
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParam<CKSSThreeHorizontal>(mm2px(Vec(6.015, 38.593)), module, Kyle::PTYPE_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 59.49)), module, Kyle::PVIMP_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(12.793, 72.119)), module, Kyle::PDECAY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 41.64)), module, Kyle::PDECAY_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 56.399)), module, Kyle::PEXP_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 71.719)), module, Kyle::PAMP_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.16, 28.711)), module, Kyle::SIGNAL_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 27.311)), module, Kyle::SIGNAL_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 89.74)), module, Kyle::ENV_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(12.793, 104.494)), module, Kyle::ENVINV_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 88.55)), module, Kyle::ENV_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 104.227)), module, Kyle::ENVINV_OUTPUT));
     }
 };
 
