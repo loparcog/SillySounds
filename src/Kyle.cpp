@@ -44,20 +44,24 @@ struct Kyle : Module
     float ampOut = 0.f;
     // Time since we hit the current input signal
     float t = 0.f;
+    // Number of 0's sequentially from input
+    float n0 = 0;
 
-    void process(const ProcessArgs &args) override
+    void calcOutVoltage(float sRate, float sTime)
     {
-        // Get input voltage (keep it positive)
-        currVoltage = abs(inputs[SIGNAL_INPUT].getVoltage());
+        /*
+            MODULE CALCULATIONS
+        */
+
         // Add to the timer
-        t += args.sampleTime;
+        t += sTime;
 
         /*
             We decay the signal either exponentially if PEXP != 0,
             otherwise we decay linearly
             out - (decay * e^(exp))
         */
-        outVoltage = outVoltage - ((params[PDECAY_PARAM].getValue() / args.sampleRate) *
+        outVoltage = outVoltage - ((params[PDECAY_PARAM].getValue() / sRate) *
                                    exp((params[PEXP_PARAM].getValue() * t)));
 
         /*
@@ -80,6 +84,37 @@ struct Kyle : Module
         // Set output voltages, accounting for amplification
         outputs[ENV_OUTPUT].setVoltage(ampOut);
         outputs[ENVINV_OUTPUT].setVoltage(10 - ampOut);
+    }
+
+    void process(const ProcessArgs &args) override
+    {
+        // Get input voltage (keep it positive)
+        currVoltage = abs(inputs[SIGNAL_INPUT].getVoltage());
+        // Check if there is any input
+        if (currVoltage < 0.01)
+        {
+            // Check if we should shut off (after no signal for 0.5s)
+            if (n0 > args.sampleRate / 2)
+            {
+                outVoltage = 0;
+                outputs[ENV_OUTPUT].setVoltage(outVoltage);
+                outputs[ENVINV_OUTPUT].setVoltage(10 - outVoltage);
+            }
+            else
+            {
+                // Iterate number of 0's
+                n0 += 1;
+
+                // Calculate output
+                calcOutVoltage(args.sampleRate, args.sampleTime);
+            }
+        }
+        else
+        {
+            n0 = 0;
+            // Calculate output
+            calcOutVoltage(args.sampleRate, args.sampleTime);
+        }
     }
 };
 
