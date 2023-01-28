@@ -32,9 +32,9 @@ struct Kyle : Module
         configParam(PDECAY_PARAM, 0.f, 10.f, 0.f, "Scale of decay");
         configParam(PEXP_PARAM, -10.f, 10.f, 0.f, "Exponent of decay");
         configParam(PAMP_PARAM, 0.f, 1.f, 0.f, "Amplication of output");
-        configInput(SIGNAL_INPUT, "Signal input");
-        configOutput(ENV_OUTPUT, "Envelope output");
-        configOutput(ENVINV_OUTPUT, "Inverse envelope output");
+        configInput(SIGNAL_INPUT, "Signal");
+        configOutput(ENV_OUTPUT, "Envelope");
+        configOutput(ENVINV_OUTPUT, "Inverse envelope");
     }
 
     // Voltage of the current input signal

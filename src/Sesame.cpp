@@ -48,6 +48,7 @@ struct Sesame : Module
         configParam(REPEAT_PARAM, 1.f, 8.f, 1.f, "Repeat frequency", "x");
         paramQuantities[REPEAT_PARAM]->snapEnabled = true;
         configParam(REPEATMODAMP_PARAM, -1.f, 1.f, 0.f, "Mod influence");
+        configParam(SWAP_PARAM, 0, 1, 0, "Swap main swing beat");
         configInput(CLOCK_INPUT, "Global clock");
         configInput(SWINGMOD_INPUT, "Swing amount mod");
         configInput(TRIGGER_INPUT, "Repeat trigger");
@@ -215,21 +216,21 @@ struct SesameWidget : ModuleWidget
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.096, 43.419)), module, Sesame::SWING_PARAM));
-        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.096, 56.919)), module, Sesame::SWINGMODAMP_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.096, 73.735)), module, Sesame::REPEAT_PARAM));
-        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.096, 87.235)), module, Sesame::REPEATMODAMP_PARAM));
-        addParam(createParamCentered<VCVButton>(mm2px(Vec(22.384, 43.419)), module, Sesame::SWAP_PARAM));
+        addParam(createParamCentered<VCVButton>(mm2px(Vec(21.376, 39.693)), module, Sesame::SWAP_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.104, 40.125)), module, Sesame::SWING_PARAM));
+        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(9.104, 52.76)), module, Sesame::SWINGMODAMP_PARAM));
+        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.104, 84.044)), module, Sesame::REPEAT_PARAM));
+        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(9.104, 97.5)), module, Sesame::REPEATMODAMP_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 28.684)), module, Sesame::CLOCK_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.384, 56.919)), module, Sesame::SWINGMOD_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.384, 73.735)), module, Sesame::TRIGGER_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.384, 87.235)), module, Sesame::REPEATMOD_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.376, 14.0)), module, Sesame::CLOCK_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.376, 53.074)), module, Sesame::SWINGMOD_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.376, 84.044)), module, Sesame::TRIGGER_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.376, 97.5)), module, Sesame::REPEATMOD_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.24, 102.704)), module, Sesame::OUT_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.376, 119.5)), module, Sesame::OUT_OUTPUT));
 
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 49.52)), module, Sesame::SWINGLIGHT_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(15.24, 80.485)), module, Sesame::REPEATLIGHT_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(8.0, 26.601)), module, Sesame::SWINGLIGHT_LIGHT));
+        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(8.0, 71.341)), module, Sesame::REPEATLIGHT_LIGHT));
     }
 };
 
