@@ -194,19 +194,19 @@ struct LolaWidget : ModuleWidget
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 52.122)), module, Lola::BRECORD_PARAM));
-        addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 73.287)), module, Lola::BPLAY_PARAM));
-        addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 87.0)), module, Lola::BSTOP_PARAM));
+        addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 53.955)), module, Lola::BRECORD_PARAM));
+        addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 75.12)), module, Lola::BPLAY_PARAM));
+        addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 88.833)), module, Lola::BSTOP_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 28.435)), module, Lola::SIGNAL_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 43.622)), module, Lola::IRECORD_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 64.787)), module, Lola::IPLAY_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 28.0)), module, Lola::SIGNAL_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 45.455)), module, Lola::IRECORD_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 66.62)), module, Lola::IPLAY_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 102.704)), module, Lola::OUT_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 105.5)), module, Lola::OUT_OUTPUT));
 
-        addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(3.62, 36.596)), module, Lola::LRECORD_LIGHT));
-        addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(3.62, 58.425)), module, Lola::LPLAY_LIGHT));
-        addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(3.62, 81.638)), module, Lola::LSTOP_LIGHT));
+        addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(2.943, 38.429)), module, Lola::LRECORD_LIGHT));
+        addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(2.943, 60.258)), module, Lola::LPLAY_LIGHT));
+        addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(2.943, 83.47)), module, Lola::LSTOP_LIGHT));
     }
 };
 
