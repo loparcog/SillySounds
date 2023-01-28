@@ -80,7 +80,9 @@ struct Lola : Module
             // Start recording if we were not initially
             if (!isRecording)
             {
-                // Flip the recording flag, empty the sample vector
+                // Flip the recording and playing flag, empty the sample vector
+                isPlaying = false;
+                lights[LPLAY_LIGHT].setBrightness(0);
                 isRecording = true;
                 lights[LRECORD_LIGHT].setBrightness(1);
                 vSample.clear();
