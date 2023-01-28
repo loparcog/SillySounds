@@ -130,14 +130,14 @@ struct KyleWidget : ModuleWidget
         addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
         addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 41.64)), module, Kyle::PDECAY_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 56.399)), module, Kyle::PEXP_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(7.62, 71.719)), module, Kyle::PAMP_PARAM));
+        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 45.933)), module, Kyle::PDECAY_PARAM));
+        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 60.468)), module, Kyle::PEXP_PARAM));
+        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 74.503)), module, Kyle::PAMP_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 27.311)), module, Kyle::SIGNAL_INPUT));
+        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 28.0)), module, Kyle::SIGNAL_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 88.55)), module, Kyle::ENV_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 104.227)), module, Kyle::ENVINV_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 90.0)), module, Kyle::ENV_OUTPUT));
+        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 105.5)), module, Kyle::ENVINV_OUTPUT));
     }
 };
 
