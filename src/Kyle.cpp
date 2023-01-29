@@ -118,27 +118,27 @@ struct Kyle : Module
     }
 };
 
-struct KyleWidget : ModuleWidget
-{
-    KyleWidget(Kyle *module)
-    {
-        setModule(module);
-        setPanel(createPanel(asset::plugin(pluginInstance, "res/Kyle.svg")));
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+struct KyleWidget : ModuleWidget {
+	KyleWidget(Kyle* module) {
+		setModule(module);
+		setPanel(createPanel(asset::plugin(pluginInstance, "res/Kyle.svg")));
 
-        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 45.933)), module, Kyle::PDECAY_PARAM));
-        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 60.468)), module, Kyle::PEXP_PARAM));
-        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 74.503)), module, Kyle::PAMP_PARAM));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 28.0)), module, Kyle::SIGNAL_INPUT));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 43.975)), module, Kyle::PDECAY_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 58.033)), module, Kyle::PEXP_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 72.09)), module, Kyle::PAMP_PARAM));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 90.0)), module, Kyle::ENV_OUTPUT));
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 105.5)), module, Kyle::ENVINV_OUTPUT));
-    }
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 28.0)), module, Kyle::SIGNAL_INPUT));
+
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 90.0)), module, Kyle::ENV_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 105.5)), module, Kyle::ENVINV_OUTPUT));
+	}
 };
 
-Model *modelKyle = createModel<Kyle, KyleWidget>("Kyle");
+
+Model* modelKyle = createModel<Kyle, KyleWidget>("Kyle");
