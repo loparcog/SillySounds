@@ -158,7 +158,7 @@ struct Sesame : Module
             {
                 // Get the value of the repeater knob and add in any mod value, clamp from 1-8
                 parRepeat = clamp(params[REPEAT_PARAM].getValue() +
-                                      ((inputs[REPEATMOD_INPUT].getVoltage() / 10) * params[REPEATMODAMP_PARAM].getValue()) * 0.8,
+                                      ((inputs[REPEATMOD_INPUT].getVoltage() / 10) * params[REPEATMODAMP_PARAM].getValue()) * 8,
                                   1.f, 8.f);
                 // Cast into a whole number
                 parRepeat = floor(parRepeat);
