@@ -5,8 +5,8 @@
   "license": "GPL-3.0-or-later",
   "brand": "Silly Sounds",
   "author": "Giacomo Loparco",
-  "authorEmail": "",
-  "authorUrl": "",
+  "authorEmail": "gdloparco@gmail.com",
+  "authorUrl": "https://loparcog.github.io",
   "pluginUrl": "",
   "manualUrl": "",
   "sourceUrl": "https://github.com/loparcog/SillySounds",
@@ -16,7 +16,7 @@
     {
       "slug": "Sesame",
       "name": "Sesame",
-      "description": "Clock modulator for repeat, swing, and delay",
+      "description": "A clock modulator for adding repeat and swing to a regular clock signal",
       "tags": [
         "Clock modulator"
       ]
@@ -24,7 +24,7 @@
     {
       "slug": "Lola",
       "name": "Lola",
-      "description": "Live sampler and playback override",
+      "description": "An in-line sampler, allowing for real-time recording and playback through manual and voltage-based controls",
       "tags": [
         "Sampler"
       ]
@@ -32,8 +32,10 @@
     {
       "slug": "Kyle",
       "name": "Kyle",
-      "description": "Live sidechain module",
-      "tags": []
+      "description": "A sidechain module utilizing an envelope follower to create an accurate level adjuster",
+      "tags": [
+          "Envelope Follower"
+      ]
     }
   ]
 }
