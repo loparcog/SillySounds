@@ -1,7 +1,7 @@
 /*
     Silly Sounds > Lola
     Live sampler for taking input and repeating it at any interval
-    Giacomo Loparco 2022
+    Gillian Loparco 2026
 */
 
 #include "plugin.hpp"
@@ -53,6 +53,7 @@ struct Lola : Module
 
     // Assuming a sample rate of 48Khz, sample up to 4s (48000 * 4 = 192000)
     int sampleMax = 192000;
+    std::array <float, 16> currentVoltage = {};
     // Track button states
     float oldBPlay = 0.f;
     float oldBRec = 0.f;
@@ -61,11 +62,11 @@ struct Lola : Module
     bool isRecording = false;
     bool isPlaying = false;
     // Vector to hold sample and index for reading
-    std::vector<float> vSample;
+    // Prepare for up to 16 values per sample
+    std::vector<std::array<float, 16>> sampleBuffer;
     int i = 0;
 
-    void
-    process(const ProcessArgs &args) override
+    void process(const ProcessArgs &args) override
     {
         /*
             INPUT
@@ -73,6 +74,10 @@ struct Lola : Module
             voltages in the vector
         */
 
+        // POLYPHONY: Get the number of input channels
+        int channels = inputs[SIGNAL_INPUT].getChannels();
+
+        /* CHANGE RECORDING STATE */
         // Check if the record button or input trigger has been activated
         if (params[BRECORD_PARAM].getValue() > oldBRec ||
             recTrigger.process(inputs[IRECORD_INPUT].getVoltage()))
@@ -85,7 +90,7 @@ struct Lola : Module
                 lights[LPLAY_LIGHT].setBrightness(0);
                 isRecording = true;
                 lights[LRECORD_LIGHT].setBrightness(1);
-                vSample.clear();
+                sampleBuffer.clear();
             }
             // Stop recording if we were
             else
@@ -99,11 +104,13 @@ struct Lola : Module
         // Save the new recording button value for later comparison
         oldBRec = params[BRECORD_PARAM].getValue();
 
+
+        /* RECORD VALUES */
         // If we're recording, start storing the current signal as a sample
         if (isRecording)
         {
             // Make sure the vector is below max size (4s of samples)
-            if (static_cast<int>(vSample.size()) > sampleMax)
+            if (static_cast<int>(sampleBuffer.size()) > sampleMax)
             {
                 // If the vector is full, stop recording
                 isRecording = false;
@@ -112,7 +119,13 @@ struct Lola : Module
             else
             {
                 // Push back the current input voltage into the vector
-                vSample.push_back(inputs[SIGNAL_INPUT].getVoltage());
+                currentVoltage = {};
+                // Get all samples
+                for (int c = 0; c < channels; c++) 
+                {
+                    currentVoltage[c] = inputs[SIGNAL_INPUT].getPolyVoltage(c);
+                }
+                sampleBuffer.push_back(currentVoltage);
             }
         }
 
@@ -123,12 +136,13 @@ struct Lola : Module
             signal
         */
 
+        /* CHANGE PLAY STATE */
         // Check if the play button or input trigger has been activated
         if (params[BPLAY_PARAM].getValue() > oldBPlay ||
             playTrigger.process(inputs[IPLAY_INPUT].getVoltage()))
         {
             // Start recording if the sample is not empty
-            if (!vSample.empty())
+            if (!sampleBuffer.empty())
             {
                 // Flip the flag and reset the iterator
                 isPlaying = true;
@@ -159,7 +173,7 @@ struct Lola : Module
         if (isPlaying)
         {
             // Make sure that we're not at the end of the sample
-            if (i == static_cast<int>(vSample.size()))
+            if (i == static_cast<int>(sampleBuffer.size()))
             {
                 // If we are, stop playing
                 isPlaying = false;
@@ -171,14 +185,26 @@ struct Lola : Module
             else
             {
                 // Send current sample voltage to output, add to iterator
-                outputs[OUT_OUTPUT].setVoltage(vSample[i++]);
+                // Set to all channels to ensure 0 output
+                for (int c = 0; c < 16; c++)
+                {
+                    outputs[OUT_OUTPUT].setVoltage(sampleBuffer[i][c], c);
+                }
+                i++;
             }
         }
         // Passthrough otherwise
         else
         {
-            outputs[OUT_OUTPUT].setVoltage(inputs[SIGNAL_INPUT].getVoltage());
+            // Set to all channels to ensure 0 output
+            for (int c = 0; c < 16; c++)
+            {
+                outputs[OUT_OUTPUT].setVoltage(inputs[SIGNAL_INPUT].getPolyVoltage(c), c);
+            }
         }
+
+        // Finish by setting the number of outputs
+        outputs[OUT_OUTPUT].setChannels(channels);
     }
 };
 

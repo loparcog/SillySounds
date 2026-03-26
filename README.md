@@ -4,4 +4,4 @@ Silly Sounds is a collection of eurorack modules I thought would be neat to make
 
 ## Questions/Issues?
 
-Raise a ticket here, check out my [Personal GitHub Pages Site](https://loparcog.github.io/) with notes on each module, or tag me on the [official VCV Rack Discord](https://discord.gg/wxa89Mh) under the user Giacomo!
+Raise a ticket here, check out my [Personal GitHub Pages Site](https://loparcog.github.io/) with notes on each module!

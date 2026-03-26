@@ -38,16 +38,25 @@ struct Kyle : Module
     }
 
     // Voltage of the current input signal
-    float currVoltage = 0.f;
+    std::array<float, 16> currentVoltage = {};
     // Voltage of the output signal
-    float outVoltage = 0.f;
-    float ampOut = 0.f;
+    std::array<float, 16> outVoltage = {};
+    float ampVoltage = 0.f;
     // Time since we hit the current input signal
     float t = 0.f;
     // Number of 0's sequentially from input
     float n0 = 0;
+    // Number of input and output channels
+    int channels = 0;
 
-    void calcOutVoltage(float sRate, float sTime)
+    void setOutputs(float out, int channel)
+    {
+        // Assign direct and inverse outputs
+        outputs[ENV_OUTPUT].setVoltage(out, channel);
+        outputs[ENVINV_OUTPUT].setVoltage(10 - out, channel);
+    }
+
+    void calcOutVoltage(float sRate, float sTime, int channel)
     {
         /*
             MODULE CALCULATIONS
@@ -61,8 +70,7 @@ struct Kyle : Module
             otherwise we decay linearly
             out - (decay * e^(exp))
         */
-        outVoltage = outVoltage - ((params[PDECAY_PARAM].getValue() / sRate) *
-                                   exp((params[PEXP_PARAM].getValue() * t)));
+        float currentVoltage = 0;
 
         /*
             If the original signal is greater than our output voltage,
@@ -70,50 +78,64 @@ struct Kyle : Module
             Set the output to the signal voltage. Otherwise, use the
             decayed output voltage
         */
-        if (currVoltage >= outVoltage)
+        if (currentVoltage >= outVoltage[channel])
         {
-            outVoltage = currVoltage;
+            outVoltage[channel] = currentVoltage;
             // Reset the time
             t = 0.f;
         }
-        outVoltage = std::max(currVoltage, outVoltage);
+        // Otherwise, just output current voltage
+        else
+        {
+            outVoltage[channel] = outVoltage[channel] - ((params[PDECAY_PARAM].getValue() / sRate) *
+                                exp((params[PEXP_PARAM].getValue() * t)));
+        }
+
+        outVoltage[channel] = std::max(currentVoltage, outVoltage[channel]);
 
         // Amplify the output (maxing out at 10)
-        ampOut = std::min(10.f, abs(outVoltage * (1 + 9.f * params[PAMP_PARAM].getValue())));
+        ampVoltage = std::min(10.f, abs(outVoltage[channel] * (1 + 9.f * params[PAMP_PARAM].getValue())));
 
         // Set output voltages, accounting for amplification
-        outputs[ENV_OUTPUT].setVoltage(ampOut);
-        outputs[ENVINV_OUTPUT].setVoltage(10 - ampOut);
+        setOutputs(ampVoltage, channel);
     }
 
     void process(const ProcessArgs &args) override
     {
+        // POLYPHONY: Get the number of input channels
+        channels = inputs[SIGNAL_INPUT].getChannels();
+
+        /* INPUT */
         // Get input voltage (keep it positive)
-        currVoltage = abs(inputs[SIGNAL_INPUT].getVoltage());
-        // Check if there is any input
-        if (currVoltage < 0.01)
+        for (int c = 0; c < channels; c++)
         {
-            // Check if we should shut off (after no signal for 0.5s)
-            if (n0 > args.sampleRate / 2)
+            currentVoltage[c] = abs(inputs[SIGNAL_INPUT].getPolyVoltage(c));
+
+            /* OUTPUT */
+
+            // Check if there is any input
+            if (currentVoltage[c] < 0.01)
             {
-                outVoltage = 0;
-                outputs[ENV_OUTPUT].setVoltage(outVoltage);
-                outputs[ENVINV_OUTPUT].setVoltage(10 - outVoltage);
+                // Check if we should shut off (after no signal for 1s)
+                if (n0 > args.sampleRate)
+                {
+                    setOutputs(0, c);
+                }
+                else
+                {
+                    // Iterate number of 0's
+                    n0 += 1;
+
+                    // Calculate output
+                    calcOutVoltage(args.sampleRate, args.sampleTime, c);
+                }
             }
             else
             {
-                // Iterate number of 0's
-                n0 += 1;
-
+                n0 = 0;
                 // Calculate output
-                calcOutVoltage(args.sampleRate, args.sampleTime);
-            }
-        }
-        else
-        {
-            n0 = 0;
-            // Calculate output
-            calcOutVoltage(args.sampleRate, args.sampleTime);
+                calcOutVoltage(args.sampleRate, args.sampleTime, c);
+            }   
         }
     }
 };
