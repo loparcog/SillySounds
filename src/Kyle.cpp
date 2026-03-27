@@ -1,3 +1,9 @@
+/*
+    Silly Sounds > Kyle
+    Sidechain module w/ envelope follower
+    Gillian Loparco 2026
+*/
+
 #include "plugin.hpp"
 #include <stdlib.h>
 
@@ -41,11 +47,10 @@ struct Kyle : Module
     std::array<float, 16> currentVoltage = {};
     // Voltage of the output signal
     std::array<float, 16> outVoltage = {};
-    float ampVoltage = 0.f;
     // Time since we hit the current input signal
-    float t = 0.f;
+    std::array<float, 16> t = {};
     // Number of 0's sequentially from input
-    float n0 = 0;
+    std::array<float, 16> n0 = {};
     // Number of input and output channels
     int channels = 0;
 
@@ -63,14 +68,15 @@ struct Kyle : Module
         */
 
         // Add to the timer
-        t += sTime;
+        t[channel] += sTime;
 
         /*
             We decay the signal either exponentially if PEXP != 0,
             otherwise we decay linearly
             out - (decay * e^(exp))
         */
-        float currentVoltage = 0;
+        outVoltage[channel] = outVoltage[channel] - ((params[PDECAY_PARAM].getValue() / sRate) *
+                                   exp((params[PEXP_PARAM].getValue() * t[channel])));;
 
         /*
             If the original signal is greater than our output voltage,
@@ -78,23 +84,15 @@ struct Kyle : Module
             Set the output to the signal voltage. Otherwise, use the
             decayed output voltage
         */
-        if (currentVoltage >= outVoltage[channel])
+        if (currentVoltage[channel] >= outVoltage[channel])
         {
-            outVoltage[channel] = currentVoltage;
+            outVoltage[channel] = currentVoltage[channel];
             // Reset the time
-            t = 0.f;
+            t[channel] = 0.f;
         }
-        // Otherwise, just output current voltage
-        else
-        {
-            outVoltage[channel] = outVoltage[channel] - ((params[PDECAY_PARAM].getValue() / sRate) *
-                                exp((params[PEXP_PARAM].getValue() * t)));
-        }
-
-        outVoltage[channel] = std::max(currentVoltage, outVoltage[channel]);
 
         // Amplify the output (maxing out at 10)
-        ampVoltage = std::min(10.f, abs(outVoltage[channel] * (1 + 9.f * params[PAMP_PARAM].getValue())));
+        float ampVoltage = std::min(10.f, abs(outVoltage[channel] * (1 + 9.f * params[PAMP_PARAM].getValue())));
 
         // Set output voltages, accounting for amplification
         setOutputs(ampVoltage, channel);
@@ -117,14 +115,14 @@ struct Kyle : Module
             if (currentVoltage[c] < 0.01)
             {
                 // Check if we should shut off (after no signal for 1s)
-                if (n0 > args.sampleRate)
+                if (n0[c] > args.sampleRate)
                 {
                     setOutputs(0, c);
                 }
                 else
                 {
                     // Iterate number of 0's
-                    n0 += 1;
+                    n0[c] += 1;
 
                     // Calculate output
                     calcOutVoltage(args.sampleRate, args.sampleTime, c);
@@ -132,11 +130,15 @@ struct Kyle : Module
             }
             else
             {
-                n0 = 0;
+                n0[c] = 0;
                 // Calculate output
                 calcOutVoltage(args.sampleRate, args.sampleTime, c);
             }   
         }
+
+        // Finally set the number of output channels
+        outputs[ENV_OUTPUT].setChannels(channels);
+        outputs[ENVINV_OUTPUT].setChannels(channels);
     }
 };
 
