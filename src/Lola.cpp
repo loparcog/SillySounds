@@ -213,22 +213,27 @@ struct LolaWidget : ModuleWidget
     LolaWidget(Lola *module)
     {
         setModule(module);
-        setPanel(createPanel(asset::plugin(pluginInstance, "res/Lola.svg")));
+        setPanel(
+            createPanel(
+                asset::plugin(pluginInstance, "res/Lola.svg"),
+                asset::plugin(pluginInstance, "res/Lola-dark.svg")
+            )
+        );
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+        addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
         addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 53.955)), module, Lola::BRECORD_PARAM));
         addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 75.12)), module, Lola::BPLAY_PARAM));
         addParam(createParamCentered<VCVButton>(mm2px(Vec(7.62, 88.833)), module, Lola::BSTOP_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 28.0)), module, Lola::SIGNAL_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 45.455)), module, Lola::IRECORD_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 66.62)), module, Lola::IPLAY_INPUT));
+        addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(7.62, 28.0)), module, Lola::SIGNAL_INPUT));
+        addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(7.62, 45.455)), module, Lola::IRECORD_INPUT));
+        addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(7.62, 66.62)), module, Lola::IPLAY_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 105.5)), module, Lola::OUT_OUTPUT));
+        addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(7.62, 105.5)), module, Lola::OUT_OUTPUT));
 
         addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(2.943, 38.429)), module, Lola::LRECORD_LIGHT));
         addChild(createLightCentered<SmallLight<RedLight>>(mm2px(Vec(2.943, 60.258)), module, Lola::LPLAY_LIGHT));

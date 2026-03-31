@@ -146,21 +146,27 @@ struct Kyle : Module
 struct KyleWidget : ModuleWidget {
 	KyleWidget(Kyle* module) {
 		setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/Kyle.svg")));
+		setPanel(
+            createPanel(
+                asset::plugin(pluginInstance, "res/Kyle.svg"),
+                asset::plugin(pluginInstance, "res/Kyle-dark.svg")
+            )
 
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+        );
+
+		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 43.975)), module, Kyle::PDECAY_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 58.033)), module, Kyle::PEXP_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.62, 72.09)), module, Kyle::PAMP_PARAM));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.62, 28.0)), module, Kyle::SIGNAL_INPUT));
+		addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(7.62, 28.0)), module, Kyle::SIGNAL_INPUT));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 90.0)), module, Kyle::ENV_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.62, 105.5)), module, Kyle::ENVINV_OUTPUT));
+		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(7.62, 90.0)), module, Kyle::ENV_OUTPUT));
+		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(7.62, 105.5)), module, Kyle::ENVINV_OUTPUT));
 	}
 };
 

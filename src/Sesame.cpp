@@ -45,7 +45,7 @@ struct Sesame : Module
         // Set snap so it snaps to whole numbers
         paramQuantities[SWING_PARAM]->snapEnabled = true;
         configParam(SWINGMODAMP_PARAM, -1.f, 1.f, 0.f, "Mod influence");
-        configParam(REPEAT_PARAM, 1.f, 8.f, 1.f, "Repeat frequency", "x");
+        configParam(REPEAT_PARAM, 1.f, 8.f, 1.f, "f", "x");
         paramQuantities[REPEAT_PARAM]->snapEnabled = true;
         configParam(REPEATMODAMP_PARAM, -1.f, 1.f, 0.f, "Mod influence");
         configParam(SWAP_PARAM, 0, 1, 0, "Swap main swing beat");
@@ -222,32 +222,36 @@ struct Sesame : Module
 
 struct SesameWidget : ModuleWidget
 {
-    SesameWidget(Sesame *module)
-    {
-        setModule(module);
-        setPanel(createPanel(asset::plugin(pluginInstance, "res/Sesame.svg")));
+	SesameWidget(Sesame* module) {
+		setModule(module);
+		setPanel(
+            createPanel(
+                asset::plugin(pluginInstance, "res/Sesame.svg"),
+                asset::plugin(pluginInstance, "res/Sesame-dark.svg")
+            )
+        );
 
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-        addParam(createParamCentered<VCVButton>(mm2px(Vec(21.376, 39.693)), module, Sesame::SWAP_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.104, 40.125)), module, Sesame::SWING_PARAM));
-        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(9.104, 52.76)), module, Sesame::SWINGMODAMP_PARAM));
-        addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(9.104, 84.044)), module, Sesame::REPEAT_PARAM));
-        addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(9.104, 97.5)), module, Sesame::REPEATMODAMP_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.48, 45.077)), module, Sesame::REPEAT_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.0, 58.803)), module, Sesame::SWING_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.48, 61.801)), module, Sesame::REPEATMODAMP_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.0, 75.466)), module, Sesame::SWINGMODAMP_PARAM));
+		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.0, 98.571)), module, Sesame::SWAP_PARAM));
 
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.376, 14.0)), module, Sesame::CLOCK_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.376, 53.074)), module, Sesame::SWINGMOD_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.376, 84.044)), module, Sesame::TRIGGER_INPUT));
-        addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.376, 97.5)), module, Sesame::REPEATMOD_INPUT));
+		addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(20.98, 14.0)), module, Sesame::CLOCK_INPUT));
+		addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(22.48, 71.801)), module, Sesame::REPEATMOD_INPUT));
+		addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(8.0, 85.466)), module, Sesame::SWINGMOD_INPUT));
+		addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(22.48, 85.625)), module, Sesame::TRIGGER_INPUT));
 
-        addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(21.376, 119.5)), module, Sesame::OUT_OUTPUT));
+		addOutput(createOutputCentered<ThemedPJ301MPort>(mm2px(Vec(9.5, 119.5)), module, Sesame::OUT_OUTPUT));
 
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(8.0, 26.601)), module, Sesame::SWINGLIGHT_LIGHT));
-        addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(8.0, 71.341)), module, Sesame::REPEATLIGHT_LIGHT));
-    }
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(22.611, 32.116)), module, Sesame::REPEATLIGHT_LIGHT));
+		addChild(createLightCentered<MediumLight<RedLight>>(mm2px(Vec(8.0, 45.165)), module, Sesame::SWINGLIGHT_LIGHT));
+	}
 };
 
 Model *modelSesame = createModel<Sesame, SesameWidget>("Sesame");
