@@ -51,4 +51,4 @@ NOTE: For workflow, I recommend putting `in` and `out` into a scope, and playing
 
 ## Questions/Issues?
 
-Raise a ticket here, check out my [Personal GitHub Pages Site](https://loparcog.github.io/) with notes on each module and their development, or shoot me a message on [Discord](https://discordapp.com/users/196388136656437250)!
+Raise a ticket here, check out my [Personal GitHub Pages Site](https://loparcog.github.io/) with notes on each module!
