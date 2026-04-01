@@ -45,7 +45,7 @@ struct Sesame : Module
         // Set snap so it snaps to whole numbers
         paramQuantities[SWING_PARAM]->snapEnabled = true;
         configParam(SWINGMODAMP_PARAM, -1.f, 1.f, 0.f, "Mod influence");
-        configParam(REPEAT_PARAM, 1.f, 8.f, 1.f, "f", "x");
+        configParam(REPEAT_PARAM, 1.f, 8.f, 1.f, "Amount of repetition when triggered", "x");
         paramQuantities[REPEAT_PARAM]->snapEnabled = true;
         configParam(REPEATMODAMP_PARAM, -1.f, 1.f, 0.f, "Mod influence");
         configParam(SWAP_PARAM, 0, 1, 0, "Swap main swing beat");
