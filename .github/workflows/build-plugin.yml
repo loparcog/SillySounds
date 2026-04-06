@@ -1,5 +1,6 @@
 name: Build VCV Rack Plugin
 on: [push, pull_request]
+# Workflow from: https://community.vcvrack.com/t/sim-development-thread/19502/12
 
 env:
   rack-sdk-version: latest
