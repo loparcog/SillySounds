@@ -5,6 +5,7 @@
 */
 
 #include "plugin.hpp"
+#include <stdlib.h>
 
 struct Lola : Module
 {
