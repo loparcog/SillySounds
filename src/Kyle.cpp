@@ -5,7 +5,7 @@
 */
 
 #include "plugin.hpp"
-#include <stdlib.h>
+#include <array>
 
 struct Kyle : Module
 {
