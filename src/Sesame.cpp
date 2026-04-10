@@ -239,9 +239,9 @@ struct SesameWidget : ModuleWidget
 
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.48, 45.077)), module, Sesame::REPEAT_PARAM));
 		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.0, 58.803)), module, Sesame::SWING_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(22.48, 61.801)), module, Sesame::REPEATMODAMP_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.0, 75.466)), module, Sesame::SWINGMODAMP_PARAM));
-		addParam(createParamCentered<RoundBlackKnob>(mm2px(Vec(8.0, 98.571)), module, Sesame::SWAP_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.48, 61.801)), module, Sesame::REPEATMODAMP_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(8.0, 75.466)), module, Sesame::SWINGMODAMP_PARAM));
+		addParam(createParamCentered<VCVButton>(mm2px(Vec(8.0, 98.571)), module, Sesame::SWAP_PARAM));
 
 		addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(20.98, 14.0)), module, Sesame::CLOCK_INPUT));
 		addInput(createInputCentered<ThemedPJ301MPort>(mm2px(Vec(22.48, 71.801)), module, Sesame::REPEATMOD_INPUT));
