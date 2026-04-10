@@ -123,8 +123,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.5199821"
-     inkscape:cx="-58.135334"
-     inkscape:cy="251.39067"
+     inkscape:cx="-83.135511"
+     inkscape:cy="251.19226"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -134,9 +134,9 @@
      inkscape:bbox-nodes="false"
      inkscape:snap-bbox-edge-midpoints="false"
      inkscape:window-width="1440"
-     inkscape:window-height="847"
+     inkscape:window-height="842"
      inkscape:window-x="0"
-     inkscape:window-y="25"
+     inkscape:window-y="30"
      inkscape:window-maximized="0"
      inkscape:snap-bbox-midpoints="true"
      inkscape:snap-nodes="false"
@@ -162,7 +162,8 @@
        height="57.947121"
        x="1.34592"
        y="203.99998"
-       ry="2.5" /><g
+       ry="2.5"
+       rx="2.5" /><g
        id="g561"
        transform="matrix(0.12598419,0,0,0.1259842,-19.140081,278.72581)"
        style="display:inline"><g

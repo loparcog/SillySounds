@@ -8,7 +8,7 @@
    version="1.1"
    id="svg8"
    inkscape:version="1.2.1 (9c6d41e, 2022-07-14)"
-   sodipodi:docname="LolaDark.svg"
+   sodipodi:docname="Lola-dark.svg"
    xml:space="preserve"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -123,8 +123,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.6719614"
-     inkscape:cx="-89.415941"
-     inkscape:cy="341.51507"
+     inkscape:cx="-127.09624"
+     inkscape:cy="341.51506"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -162,7 +162,8 @@
        height="57.947121"
        x="1.34592"
        y="203.99998"
-       ry="2.5" /><g
+       ry="2.5"
+       rx="2.5" /><g
        id="g561"
        transform="matrix(0.12598419,0,0,0.1259842,-19.140081,278.72581)"
        style="display:inline;stroke:#e6e6e6"><g
